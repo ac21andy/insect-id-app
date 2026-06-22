@@ -1,0 +1,12 @@
+{
+  "name": "insect-id-app",
+  "version": "2.0.0",
+  "description": "台灣昆蟲辨識 AI",
+  "main": "api/server.js",
+  "scripts": {
+    "start": "node api/server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
