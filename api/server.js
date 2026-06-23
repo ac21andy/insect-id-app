@@ -129,6 +129,16 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Debug endpoint
+  if (req.method === 'GET' && req.url === '/debug') {
+    json(res, 200, {
+      hasKey: !!process.env.ANTHROPIC_API_KEY,
+      keyPrefix: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 15) + '...' : 'NOT SET',
+      allEnvKeys: Object.keys(process.env).filter(k => k.includes('ANTHROP') || k.includes('API') || k.includes('insect'))
+    });
+    return;
+  }
+
   res.writeHead(404); res.end('Not found');
 });
 
