@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>昆蟲小偵探｜上課版</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+
+:root {
+  --green: #2d8a4e;
+  --green-light: #f0fff4;
+  --green-mid: #5cb87a;
+  --green-dark: #1a5c32;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --bg: #f4f9f4;
+  --white: #ffffff;
+  --gray: #6b7280;
+  --gray-light: #f3f4f6;
+  --text: #1f2937;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* Header */
+.header {
+  background: var(--green);
+  padding: 0.9rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.header-title { color:#fff; font-size:1.3rem; font-weight:900; }
+.header-sub { color:#a8e6bc; font-size:0.75rem; margin-top:2px; }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background: var(--white);
+  border-bottom: 2px solid #e5e7eb;
+  padding: 0 1.5rem;
+}
+.tab {
+  padding: 0.9rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gray);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  font-family: 'Noto Sans TC', sans-serif;
+  background: none; border-top: none; border-left: none; border-right: none;
+}
+.tab:hover { color: var(--green); }
+.tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+/* Panels */
+.panel { display: none; padding: 1.5rem; max-width: 800px; margin: 0 auto; }
+.panel.active { display: block; }
+
+/* ── 辨識區 ── */
+.upload-zone {
+  background: var(--white);
+  border: 3px dashed var(--green-mid);
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+}
+.upload-zone:hover { border-color: var(--green); background: var(--green-light); }
+.upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.upload-icon { font-size:3rem; display:block; margin-bottom:0.5rem; }
+.upload-zone h3 { font-size:1.1rem; font-weight:700; color:var(--green); margin-bottom:0.3rem; }
+.upload-zone p { color:var(--gray); font-size:0.85rem; }
+
+.preview-wrap {
+  display:none; position:relative;
+  border-radius:16px; overflow:hidden;
+  box-shadow:var(--shadow); margin-bottom:1rem;
+}
+.preview-wrap img { width:100%; max-height:320px; object-fit:contain; background:#111; display:block; }
+.scan-bar {
+  display:none; position:absolute; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,transparent,var(--green-mid),transparent);
+  animation:scan 1.8s ease-in-out infinite;
+}
+@keyframes scan { 0%{top:0} 100%{top:100%} }
+.btn-clear {
+  position:absolute; top:10px; right:10px;
+  background:rgba(0,0,0,0.6); color:#fff; border:none;
+  border-radius:20px; padding:5px 12px; font-size:0.78rem;
+  cursor:pointer; font-family:'Noto Sans TC',sans-serif;
+}
+.btn-clear:hover { background:#ef4444; }
+
+.btn-identify {
+  width:100%; padding:1rem;
+  background:var(--green); color:#fff; border:none;
+  border-radius:50px; font-size:1.1rem; font-weight:700;
+  font-family:'Noto Sans TC',sans-serif;
+  cursor:pointer; transition:all 0.25s;
+  box-shadow:0 4px 14px rgba(45,138,78,0.4);
+  margin-bottom:1rem;
+}
+.btn-identify:hover:not(:disabled) { background:var(--green-dark); transform:translateY(-2px); }
+.btn-identify:disabled { background:#b0c8b8; box-shadow:none; cursor:not-allowed; transform:none; }
+
+/* Result */
+.result-card {
+  display:none; background:var(--white);
+  border-radius:20px; overflow:hidden;
+  box-shadow:var(--shadow);
+  animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  margin-bottom:1rem;
+}
+@keyframes popIn { from{opacity:0;transform:scale(0.93) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+.result-head {
+  background:var(--green); padding:1rem 1.25rem;
+  display:flex; align-items:center; gap:0.75rem;
+}
+.result-head-icon { font-size:1.8rem; }
+.result-head-name { color:#fff; font-size:1.2rem; font-weight:900; }
+.result-head-class { color:#a8e6bc; font-size:0.8rem; margin-top:2px; }
+.result-body { padding:1.25rem; }
+.result-row { margin-bottom:1rem; }
+.result-label { font-size:0.72rem; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:3px; }
+.result-text { font-size:0.95rem; line-height:1.8; color:var(--text); }
+.badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.82rem; font-weight:700; }
+.badge-high { background:#d1fae5; color:#065f46; }
+.badge-mid  { background:#fef3c7; color:#92400e; }
+.badge-low  { background:#fee2e2; color:#991b1b; }
+
+/* Feedback */
+.feedback-row {
+  display:none; gap:12px; margin-top:0.5rem;
+}
+.feedback-row.show { display:flex; }
+.btn-correct {
+  flex:1; padding:0.9rem; border:none; border-radius:14px;
+  font-size:1rem; font-weight:700; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif; transition:all 0.2s;
+  background:#d1fae5; color:#065f46;
+}
+.btn-correct:hover { background:#a7f3d0; }
+.btn-wrong {
+  flex:1; padding:0.9rem; border:none; border-radius:14px;
+  font-size:1rem; font-weight:700; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif; transition:all 0.2s;
+  background:#fee2e2; color:#991b1b;
+}
+.btn-wrong:hover { background:#fecaca; }
+
+/* Teacher input */
+.teacher-input {
+  display:none; background:#fffbeb;
+  border:2px solid var(--amber); border-radius:16px;
+  padding:1.2rem; margin-top:0.75rem;
+  animation:popIn 0.3s ease;
+}
+.teacher-input h4 { font-size:0.95rem; font-weight:700; color:#92400e; margin-bottom:0.75rem; }
+.teacher-input input {
+  width:100%; padding:0.75rem 1rem;
+  border:1.5px solid #fcd34d; border-radius:10px;
+  font-size:0.95rem; font-family:'Noto Sans TC',sans-serif;
+  margin-bottom:0.75rem; outline:none;
+  background:#fff;
+}
+.teacher-input input:focus { border-color:var(--amber); }
+.btn-teacher-submit {
+  width:100%; padding:0.75rem; border:none;
+  border-radius:10px; background:var(--amber); color:#fff;
+  font-size:0.95rem; font-weight:700;
+  font-family:'Noto Sans TC',sans-serif; cursor:pointer;
+}
+.btn-teacher-submit:hover { background:#d97706; }
+
+.feedback-done {
+  display:none; text-align:center;
+  padding:1rem; background:var(--green-light);
+  border-radius:14px; color:var(--green);
+  font-weight:700; font-size:1rem;
+  animation:popIn 0.3s ease;
+}
+
+/* Error */
+.error-box {
+  display:none; background:#fff5f5; border:2px solid #fecaca;
+  border-radius:14px; padding:1rem 1.25rem;
+  color:#991b1b; font-size:0.9rem; margin-bottom:1rem;
+}
+
+/* ── Dashboard ── */
+.dash-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:1rem; margin-bottom:1.5rem;
+}
+.dash-card {
+  background:var(--white); border-radius:16px;
+  padding:1.2rem; text-align:center;
+  box-shadow:var(--shadow);
+}
+.dash-num { font-size:2.5rem; font-weight:900; color:var(--green); line-height:1; }
+.dash-label { font-size:0.78rem; color:var(--gray); margin-top:6px; }
+
+.dash-section-title {
+  font-size:0.85rem; font-weight:700; color:var(--green);
+  text-transform:uppercase; letter-spacing:0.1em;
+  margin-bottom:0.75rem;
+}
+
+.species-list {
+  background:var(--white); border-radius:16px;
+  padding:1.25rem; box-shadow:var(--shadow); margin-bottom:1.5rem;
+}
+.species-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 0; border-bottom:1px solid #f3f4f6;
+}
+.species-item:last-child { border-bottom:none; }
+.species-rank {
+  width:28px; height:28px; border-radius:50%;
+  background:var(--green-light); color:var(--green);
+  font-size:0.78rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.species-name { flex:1; font-size:0.9rem; font-weight:700; }
+.species-bar-wrap { width:120px; height:8px; background:#e5e7eb; border-radius:4px; overflow:hidden; }
+.species-bar { height:100%; background:var(--green-mid); border-radius:4px; transition:width 0.6s ease; }
+.species-count { font-size:0.8rem; color:var(--gray); min-width:30px; text-align:right; }
+
+.accuracy-row {
+  background:var(--white); border-radius:16px;
+  padding:1.25rem; box-shadow:var(--shadow);
+  display:flex; align-items:center; gap:1rem;
+}
+.accuracy-circle {
+  width:80px; height:80px; border-radius:50%;
+  background:conic-gradient(var(--green) 0%, var(--green) var(--pct), #e5e7eb var(--pct));
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; position:relative;
+}
+.accuracy-circle::after {
+  content:''; position:absolute;
+  width:58px; height:58px; border-radius:50%; background:var(--white);
+}
+.accuracy-num {
+  position:relative; z-index:1;
+  font-size:1rem; font-weight:900; color:var(--green);
+}
+.accuracy-info h4 { font-size:1rem; font-weight:700; margin-bottom:4px; }
+.accuracy-info p { font-size:0.82rem; color:var(--gray); }
+
+.btn-reset-dash {
+  margin-top:1.5rem; width:100%; padding:0.75rem;
+  background:none; border:1.5px solid #e5e7eb;
+  border-radius:10px; color:var(--gray); font-size:0.85rem;
+  cursor:pointer; font-family:'Noto Sans TC',sans-serif;
+  transition:all 0.2s;
+}
+.btn-reset-dash:hover { border-color:var(--red); color:var(--red); }
+
+/* ── 訓練上傳區 ── */
+.password-gate {
+  background:var(--white); border-radius:20px;
+  padding:2rem; text-align:center; box-shadow:var(--shadow);
+}
+.password-gate h3 { font-size:1.1rem; font-weight:700; margin-bottom:0.5rem; }
+.password-gate p { color:var(--gray); font-size:0.85rem; margin-bottom:1.25rem; }
+.password-gate input {
+  width:100%; max-width:280px; padding:0.75rem 1rem;
+  border:1.5px solid #e5e7eb; border-radius:10px;
+  font-size:1rem; text-align:center; letter-spacing:0.15em;
+  font-family:'Noto Sans TC',sans-serif; outline:none;
+  display:block; margin:0 auto 1rem;
+}
+.password-gate input:focus { border-color:var(--green); }
+.btn-unlock {
+  padding:0.75rem 2rem; background:var(--green);
+  color:#fff; border:none; border-radius:10px;
+  font-size:0.95rem; font-weight:700;
+  font-family:'Noto Sans TC',sans-serif; cursor:pointer;
+}
+.btn-unlock:hover { background:var(--green-dark); }
+.pw-error { color:var(--red); font-size:0.82rem; margin-top:0.5rem; }
+
+.train-panel { display:none; }
+.train-upload-zone {
+  background:var(--white); border:3px dashed #fcd34d;
+  border-radius:20px; padding:2rem; text-align:center;
+  cursor:pointer; position:relative; transition:all 0.2s;
+  margin-bottom:1rem;
+}
+.train-upload-zone:hover { border-color:var(--amber); background:#fffbeb; }
+.train-upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+
+.train-info {
+  background:#fffbeb; border:1.5px solid #fcd34d;
+  border-radius:12px; padding:1rem 1.25rem;
+  margin-bottom:1rem; font-size:0.85rem; color:#92400e; line-height:1.7;
+}
+
+.file-preview-list { display:flex; flex-direction:column; gap:6px; margin-bottom:1rem; }
+.file-preview-item {
+  background:var(--white); border:1px solid #e5e7eb;
+  border-radius:10px; padding:8px 14px;
+  display:flex; align-items:center; gap:10px; font-size:0.85rem;
+}
+.file-preview-item .fi-name { flex:1; font-weight:700; }
+.file-preview-item .fi-size { color:var(--gray); font-size:0.78rem; }
+.fi-ok { color:var(--green); font-size:1rem; }
+
+.btn-train-upload {
+  width:100%; padding:0.9rem; background:var(--amber);
+  color:#fff; border:none; border-radius:14px;
+  font-size:1rem; font-weight:700;
+  font-family:'Noto Sans TC',sans-serif; cursor:pointer;
+  transition:all 0.2s;
+}
+.btn-train-upload:hover:not(:disabled) { background:#d97706; }
+.btn-train-upload:disabled { background:#fcd34d; cursor:not-allowed; }
+
+.train-success {
+  display:none; background:#d1fae5; border-radius:14px;
+  padding:1.2rem; text-align:center; color:#065f46;
+  font-weight:700; font-size:1rem; animation:popIn 0.3s ease;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">🔍 昆蟲小偵探｜上課版</div>
+    <div class="header-sub">昆蟲辨識 AI · 營隊專用</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('identify')">🔍 辨識昆蟲</button>
+  <button class="tab" onclick="switchTab('dashboard')">📊 Dashboard</button>
+  <button class="tab" onclick="switchTab('train')">📁 訓練上傳</button>
+</div>
+
+<!-- ══ 辨識區 ══ -->
+<div class="panel active" id="panel-identify">
+
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" capture="environment">
+    <span class="upload-icon">📷</span>
+    <h3>上傳昆蟲照片</h3>
+    <p>點我拍照，或從相簿選取</p>
+  </div>
+
+  <div class="preview-wrap" id="previewWrap">
+    <div class="scan-bar" id="scanBar"></div>
+    <img id="previewImg" src="" alt="預覽">
+    <button class="btn-clear" id="clearBtn">✕ 換一張</button>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <button class="btn-identify" id="identifyBtn" disabled onclick="identify()">
+    🔍 辨識這隻昆蟲！
+  </button>
+
+  <!-- Result -->
+  <div class="result-card" id="resultCard">
+    <div class="result-head">
+      <span class="result-head-icon" id="rIcon">🐛</span>
+      <div>
+        <div class="result-head-name" id="rName">辨識結果</div>
+        <div class="result-head-class" id="rClass"></div>
+      </div>
+    </div>
+    <div class="result-body" id="rBody"></div>
+  </div>
+
+  <!-- Feedback -->
+  <div class="feedback-row" id="feedbackRow">
+    <button class="btn-correct" onclick="feedback(true)">✅ 答對了！</button>
+    <button class="btn-wrong" onclick="feedback(false)">❌ 答錯了</button>
+  </div>
+
+  <!-- Teacher input -->
+  <div class="teacher-input" id="teacherInput">
+    <h4>🧑‍🏫 老師：請填入正確答案</h4>
+    <input type="text" id="correctAnswer" placeholder="例：獨角仙、七星瓢蟲...">
+    <button class="btn-teacher-submit" onclick="submitCorrection()">✓ 確認送出</button>
+  </div>
+
+  <!-- Done -->
+  <div class="feedback-done" id="feedbackDone"></div>
+
+</div>
+
+<!-- ══ Dashboard ══ -->
+<div class="panel" id="panel-dashboard">
+
+  <div class="dash-grid">
+    <div class="dash-card">
+      <div class="dash-num" id="dTotal">0</div>
+      <div class="dash-label">📷 上傳總張數</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-num" id="dSpecies">0</div>
+      <div class="dash-label">🦋 辨識種類數</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-num" id="dCorrect">0</div>
+      <div class="dash-label">✅ 答對次數</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-num" id="dWrong">0</div>
+      <div class="dash-label">❌ 答錯次數</div>
+    </div>
+  </div>
+
+  <div class="dash-section-title">最常出現的昆蟲</div>
+  <div class="species-list" id="speciesList">
+    <div style="text-align:center;color:#9ca3af;padding:1rem;font-size:0.85rem;">還沒有辨識記錄</div>
+  </div>
+
+  <div class="dash-section-title">辨識答對率</div>
+  <div class="accuracy-row">
+    <div class="accuracy-circle" id="accuracyCircle" style="--pct:0%">
+      <span class="accuracy-num" id="accuracyNum">-</span>
+    </div>
+    <div class="accuracy-info">
+      <h4>AI 辨識準確度</h4>
+      <p id="accuracyDesc">尚無資料</p>
+    </div>
+  </div>
+
+  <button class="btn-reset-dash" onclick="resetDashboard()">🗑 重置營隊資料</button>
+
+</div>
+
+<!-- ══ 訓練上傳區 ══ -->
+<div class="panel" id="panel-train">
+
+  <!-- Password gate -->
+  <div class="password-gate" id="passwordGate">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔒</div>
+    <h3>老師專區</h3>
+    <p>請輸入密碼進入訓練上傳區</p>
+    <input type="password" id="pwInput" placeholder="輸入密碼" onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="btn-unlock" onclick="checkPw()">進入</button>
+    <div class="pw-error" id="pwError"></div>
+  </div>
+
+  <!-- Train panel -->
+  <div class="train-panel" id="trainPanel">
+
+    <div class="train-info">
+      📌 <strong>使用說明：</strong><br>
+      上傳昆蟲照片，<strong>檔名就是昆蟲名稱</strong>（例：獨角仙.jpg、七星瓢蟲.png）<br>
+      上傳後會自動更新 Dashboard 的統計數字，不經過 AI 辨識。
+    </div>
+
+    <div class="train-upload-zone" id="trainUploadZone">
+      <input type="file" id="trainFileInput" accept="image/*" multiple>
+      <span class="upload-icon">📁</span>
+      <h3 style="color:#92400e;">選擇昆蟲照片（可多選）</h3>
+      <p style="color:#a78c5a;">檔名 = 昆蟲名稱</p>
+    </div>
+
+    <div class="file-preview-list" id="filePreviewList"></div>
+
+    <button class="btn-train-upload" id="trainUploadBtn" disabled onclick="doTrainUpload()">
+      📤 上傳並更新 Dashboard
+    </button>
+
+    <div class="train-success" id="trainSuccess"></div>
+
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, addDoc, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAOczw40gPOS1mKFiYZlig_ndHUf_0wR0w",
+  authDomain: "buzz-insect-id-app.firebaseapp.com",
+  projectId: "buzz-insect-id-app",
+  storageBucket: "buzz-insect-id-app.firebasestorage.app",
+  messagingSenderId: "515730771986",
+  appId: "1:515730771986:web:4fdf15599a8d6bdeb9c8cb",
+  measurementId: "G-5FF15HCJ88"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── Backend URL ──
+// 部署 Railway 後把這裡換成你的網址
+const BACKEND = 'https://insect-id-app-production.up.railway.app';
+
+// ── State ──
+let currentBase64 = null, currentMime = null, currentResult = null, currentName = '';
+
+// ── Tab switching ──
+window.switchTab = function(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  if (tab === 'dashboard') loadDashboard();
+};
+
+// ── Upload ──
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFile(f);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(file) {
+  currentMime = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentBase64 = e.target.result.split(',')[1];
+    document.getElementById('previewImg').src = e.target.result;
+    uploadZone.style.display = 'none';
+    document.getElementById('previewWrap').style.display = 'block';
+    document.getElementById('identifyBtn').disabled = false;
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('feedbackRow').classList.remove('show');
+    document.getElementById('teacherInput').style.display = 'none';
+    document.getElementById('feedbackDone').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  currentBase64 = null; currentResult = null; currentName = '';
+  document.getElementById('previewImg').src = '';
+  uploadZone.style.display = 'block';
+  document.getElementById('previewWrap').style.display = 'none';
+  document.getElementById('identifyBtn').disabled = true;
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('feedbackRow').classList.remove('show');
+  document.getElementById('teacherInput').style.display = 'none';
+  document.getElementById('feedbackDone').style.display = 'none';
+  fileInput.value = '';
+});
+
+// ── Identify ──
+window.identify = async function() {
+  if (!currentBase64) return;
+  const btn = document.getElementById('identifyBtn');
+  const scanBar = document.getElementById('scanBar');
+  btn.disabled = true; btn.textContent = '🔬 AI 分析中...';
+  scanBar.style.display = 'block';
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('feedbackRow').classList.remove('show');
+  document.getElementById('teacherInput').style.display = 'none';
+  document.getElementById('feedbackDone').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    const res = await fetch(`${BACKEND}/api/identify`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: currentBase64, mimeType: currentMime })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    currentResult = data.result;
+    renderResult(data.result);
+    document.getElementById('feedbackRow').classList.add('show');
+
+    // 記錄到 Firebase
+    await recordIdentify(currentName);
+
+  } catch(err) {
+    const eb = document.getElementById('errorBox');
+    eb.textContent = '😅 辨識失敗：' + err.message;
+    eb.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 辨識這隻昆蟲！';
+    scanBar.style.display = 'none';
+  }
+};
+
+function getIcon(text) {
+  const t = text.toLowerCase();
+  if (t.includes('蝴蝶')||t.includes('鳳蝶')||t.includes('粉蝶')) return '🦋';
+  if (t.includes('獨角仙')||t.includes('金龜')) return '🦏';
+  if (t.includes('鍬形')) return '🪲';
+  if (t.includes('瓢蟲')) return '🐞';
+  if (t.includes('蜜蜂')||t.includes('虎頭蜂')||t.includes('蜂')) return '🐝';
+  if (t.includes('螞蟻')) return '🐜';
+  if (t.includes('蜻蜓')||t.includes('豆娘')) return '🪁';
+  if (t.includes('螳螂')) return '🦗';
+  return '🐛';
+}
+
+function renderResult(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  let sections = [], cur = null;
+  for (const line of lines) {
+    const l = line.replace(/\*\*/g,'').trim();
+    if (l.includes('這是什麼')) { cur = {label:'這是什麼？', content:''}; }
+    else if (l.includes('分類'))    { if(cur)sections.push(cur); cur={label:'分類',content:''}; }
+    else if (l.includes('特徵'))    { if(cur)sections.push(cur); cur={label:'特徵',content:''}; }
+    else if (l.includes('在哪裡'))  { if(cur)sections.push(cur); cur={label:'在哪裡找到牠？',content:''}; }
+    else if (l.includes('辨識信心')){ if(cur)sections.push(cur); cur={label:'辨識信心',content:''}; }
+    else if (cur) {
+      const c = l.replace(/^[🐛📍✨🌿🎯]\s*/,'').replace(/^[-•]\s*/,'');
+      if (c) cur.content += (cur.content?'\n':'')+c;
+    }
+  }
+  if (cur) sections.push(cur);
+
+  currentName = sections[0]?.content?.split('\n')[0] || '未知昆蟲';
+  document.getElementById('rIcon').textContent = getIcon(currentName + text);
+  document.getElementById('rName').textContent = currentName;
+
+  const classSection = sections.find(s=>s.label==='分類');
+  document.getElementById('rClass').textContent = classSection?.content || '';
+
+  const bodyHTML = sections.slice(1).map(s => {
+    if (s.label==='辨識信心') {
+      const cls = s.content.includes('高')?'high':s.content.includes('中')?'mid':'low';
+      const label = s.content.includes('高')?'高 ✅':s.content.includes('中')?'中 ⚠️':'低 ❓';
+      return `<div class="result-row"><div class="result-label">${s.label}</div><span class="badge badge-${cls}">${label}</span></div>`;
+    }
+    return `<div class="result-row"><div class="result-label">${s.label}</div><div class="result-text">${s.content}</div></div>`;
+  }).join('');
+
+  document.getElementById('rBody').innerHTML = bodyHTML;
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── Feedback ──
+window.feedback = async function(correct) {
+  document.getElementById('feedbackRow').classList.remove('show');
+  if (correct) {
+    await recordFeedback(currentName, true, currentName);
+    showDone('🎉 太棒了！這筆資料已記錄，幫助 AI 變得更聰明！');
+  } else {
+    document.getElementById('teacherInput').style.display = 'block';
+    document.getElementById('correctAnswer').focus();
+  }
+};
+
+window.submitCorrection = async function() {
+  const answer = document.getElementById('correctAnswer').value.trim();
+  if (!answer) { document.getElementById('correctAnswer').focus(); return; }
+  await recordFeedback(currentName, false, answer);
+  document.getElementById('teacherInput').style.display = 'none';
+  showDone(`✏️ 已記錄！正確答案：${answer}，謝謝老師！`);
+  document.getElementById('correctAnswer').value = '';
+};
+
+function showDone(msg) {
+  const el = document.getElementById('feedbackDone');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// ── Firebase helpers ──
+async function getStats() {
+  const ref = doc(db, 'stats', 'camp');
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data() : { total:0, correct:0, wrong:0, species:{} };
+}
+
+async function recordIdentify(name) {
+  try {
+    const ref = doc(db, 'stats', 'camp');
+    const stats = await getStats();
+    const species = stats.species || {};
+    species[name] = (species[name] || 0) + 1;
+    await setDoc(ref, { total: (stats.total||0)+1, correct:stats.correct||0, wrong:stats.wrong||0, species }, { merge: true });
+  } catch(e) { console.error(e); }
+}
+
+async function recordFeedback(aiAnswer, correct, trueAnswer) {
+  try {
+    const ref = doc(db, 'stats', 'camp');
+    const stats = await getStats();
+    if (correct) {
+      await setDoc(ref, { correct:(stats.correct||0)+1 }, {merge:true});
+    } else {
+      await setDoc(ref, { wrong:(stats.wrong||0)+1 }, {merge:true});
+      await addDoc(collection(db,'corrections'), {
+        aiAnswer, trueAnswer, timestamp: serverTimestamp()
+      });
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ── Dashboard ──
+async function loadDashboard() {
+  try {
+    const stats = await getStats();
+    document.getElementById('dTotal').textContent = stats.total || 0;
+    document.getElementById('dCorrect').textContent = stats.correct || 0;
+    document.getElementById('dWrong').textContent = stats.wrong || 0;
+
+    const species = stats.species || {};
+    const speciesArr = Object.entries(species).sort((a,b)=>b[1]-a[1]);
+    document.getElementById('dSpecies').textContent = speciesArr.length;
+
+    const maxCount = speciesArr[0]?.[1] || 1;
+    if (speciesArr.length === 0) {
+      document.getElementById('speciesList').innerHTML =
+        '<div style="text-align:center;color:#9ca3af;padding:1rem;font-size:0.85rem;">還沒有辨識記錄</div>';
+    } else {
+      document.getElementById('speciesList').innerHTML = speciesArr.slice(0,10).map(([name,count],i) => `
+        <div class="species-item">
+          <div class="species-rank">${i+1}</div>
+          <div class="species-name">${name}</div>
+          <div class="species-bar-wrap"><div class="species-bar" style="width:${Math.round(count/maxCount*100)}%"></div></div>
+          <div class="species-count">${count}次</div>
+        </div>
+      `).join('');
+    }
+
+    const total = (stats.correct||0) + (stats.wrong||0);
+    const pct = total > 0 ? Math.round((stats.correct||0)/total*100) : 0;
+    document.getElementById('accuracyNum').textContent = total > 0 ? pct+'%' : '-';
+    document.getElementById('accuracyCircle').style.setProperty('--pct', pct+'%');
+    document.getElementById('accuracyDesc').textContent = total > 0
+      ? `共評分 ${total} 次，答對 ${stats.correct||0} 次`
+      : '尚無評分資料';
+  } catch(e) { console.error(e); }
+}
+
+window.resetDashboard = async function() {
+  if (!confirm('確定要重置所有營隊資料？這個動作無法復原。')) return;
+  try {
+    await setDoc(doc(db,'stats','camp'), {total:0,correct:0,wrong:0,species:{}});
+    loadDashboard();
+  } catch(e) { alert('重置失敗：'+e.message); }
+};
+
+// ── Password ──
+window.checkPw = function() {
+  const pw = document.getElementById('pwInput').value;
+  if (pw === 'insectago') {
+    document.getElementById('passwordGate').style.display = 'none';
+    document.getElementById('trainPanel').style.display = 'block';
+  } else {
+    document.getElementById('pwError').textContent = '密碼錯誤，請再試一次';
+  }
+};
+
+// ── Train upload ──
+let trainFiles = [];
+const trainFileInput = document.getElementById('trainFileInput');
+trainFileInput.addEventListener('change', e => {
+  trainFiles = Array.from(e.target.files);
+  renderFileList();
+});
+
+function renderFileList() {
+  const list = document.getElementById('filePreviewList');
+  if (trainFiles.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = trainFiles.map(f => {
+    const name = f.name.replace(/\.[^.]+$/, '');
+    const size = (f.size/1024).toFixed(0) + ' KB';
+    return `<div class="file-preview-item">
+      <span class="fi-ok">✓</span>
+      <span class="fi-name">${name}</span>
+      <span class="fi-size">${size}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('trainUploadBtn').disabled = false;
+}
+
+window.doTrainUpload = async function() {
+  if (trainFiles.length === 0) return;
+  const btn = document.getElementById('trainUploadBtn');
+  btn.disabled = true; btn.textContent = '上傳中...';
+
+  try {
+    const ref = doc(db, 'stats', 'camp');
+    const stats = await getStats();
+    const species = stats.species || {};
+    for (const f of trainFiles) {
+      const name = f.name.replace(/\.[^.]+$/, '');
+      species[name] = (species[name] || 0) + 1;
+    }
+    await setDoc(ref, {
+      total: (stats.total||0) + trainFiles.length,
+      correct: stats.correct||0,
+      wrong: stats.wrong||0,
+      species
+    });
+
+    const suc = document.getElementById('trainSuccess');
+    suc.textContent = `✅ 成功上傳 ${trainFiles.length} 筆！Dashboard 已更新。`;
+    suc.style.display = 'block';
+    document.getElementById('filePreviewList').innerHTML = '';
+    trainFiles = [];
+    trainFileInput.value = '';
+  } catch(e) {
+    alert('上傳失敗：' + e.message);
+  } finally {
+    btn.disabled = true; btn.textContent = '📤 上傳並更新 Dashboard';
+  }
+};
+
+</script>
+</body>
+</html>

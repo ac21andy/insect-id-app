@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>昆蟲小偵探｜回家版</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+
+:root {
+  --green: #2d8a4e;
+  --green-light: #f0fff4;
+  --green-mid: #5cb87a;
+  --green-dark: #1a5c32;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --bg: #f4f9f4;
+  --white: #ffffff;
+  --gray: #6b7280;
+  --text: #1f2937;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Noto Sans TC',sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; display:flex; flex-direction:column; align-items:center;
+}
+
+header {
+  width:100%; background:var(--green);
+  padding:1.1rem 1.5rem; text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+header h1 { color:#fff; font-size:1.6rem; font-weight:900; }
+header p { color:#a8e6bc; font-size:0.82rem; margin-top:3px; }
+
+.main { width:100%; max-width:560px; padding:1.5rem; display:flex; flex-direction:column; gap:1.2rem; }
+
+.upload-zone {
+  background:var(--white); border:3px dashed var(--green-mid);
+  border-radius:20px; padding:2.2rem 1.5rem; text-align:center;
+  cursor:pointer; position:relative; transition:all 0.2s;
+}
+.upload-zone:hover { border-color:var(--green); background:var(--green-light); }
+.upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.upload-icon { font-size:3.5rem; display:block; margin-bottom:0.6rem; }
+.upload-zone h3 { font-size:1.15rem; font-weight:700; color:var(--green); margin-bottom:0.3rem; }
+.upload-zone p { color:var(--gray); font-size:0.85rem; }
+
+.preview-wrap {
+  display:none; position:relative; border-radius:16px;
+  overflow:hidden; box-shadow:var(--shadow);
+}
+.preview-wrap img { width:100%; max-height:360px; object-fit:contain; background:#111; display:block; }
+.scan-bar {
+  display:none; position:absolute; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,transparent,var(--green-mid),transparent);
+  animation:scan 1.8s ease-in-out infinite;
+}
+@keyframes scan { 0%{top:0} 100%{top:100%} }
+.btn-clear {
+  position:absolute; top:10px; right:10px;
+  background:rgba(0,0,0,0.6); color:#fff; border:none;
+  border-radius:20px; padding:5px 12px; font-size:0.78rem;
+  cursor:pointer; font-family:'Noto Sans TC',sans-serif;
+}
+.btn-clear:hover { background:#ef4444; }
+
+.btn-identify {
+  width:100%; padding:1.05rem;
+  background:var(--green); color:#fff; border:none;
+  border-radius:50px; font-size:1.1rem; font-weight:700;
+  font-family:'Noto Sans TC',sans-serif; cursor:pointer;
+  transition:all 0.25s; box-shadow:0 4px 14px rgba(45,138,78,0.4);
+}
+.btn-identify:hover:not(:disabled) { background:var(--green-dark); transform:translateY(-2px); }
+.btn-identify:disabled { background:#b0c8b8; box-shadow:none; cursor:not-allowed; transform:none; }
+
+.result-card {
+  display:none; background:var(--white); border-radius:20px;
+  overflow:hidden; box-shadow:var(--shadow);
+  animation:popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+}
+@keyframes popIn { from{opacity:0;transform:scale(0.93) translateY(12px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+.result-head {
+  background:var(--green); padding:1.1rem 1.25rem;
+  display:flex; align-items:center; gap:0.75rem;
+}
+.rh-icon { font-size:1.8rem; }
+.rh-name { color:#fff; font-size:1.2rem; font-weight:900; }
+.rh-class { color:#a8e6bc; font-size:0.8rem; margin-top:2px; }
+.result-body { padding:1.2rem; }
+.result-row { margin-bottom:1rem; }
+.result-row:last-child { margin-bottom:0; }
+.result-label { font-size:0.7rem; font-weight:700; color:var(--green); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:3px; }
+.result-text { font-size:0.93rem; line-height:1.8; }
+.badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:0.82rem; font-weight:700; }
+.badge-high { background:#d1fae5; color:#065f46; }
+.badge-mid  { background:#fef3c7; color:#92400e; }
+.badge-low  { background:#fee2e2; color:#991b1b; }
+
+/* Report error */
+.report-btn-row { display:none; justify-content:center; }
+.report-btn-row.show { display:flex; }
+.btn-report {
+  padding:0.65rem 1.5rem; background:none;
+  border:1.5px solid #e5e7eb; border-radius:20px;
+  color:var(--gray); font-size:0.85rem; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif; transition:all 0.2s;
+}
+.btn-report:hover { border-color:var(--amber); color:var(--amber); }
+
+.report-panel {
+  display:none; background:#fffbeb; border:2px solid #fcd34d;
+  border-radius:16px; padding:1.2rem; animation:popIn 0.3s ease;
+}
+.report-panel h4 { font-size:0.95rem; font-weight:700; color:#92400e; margin-bottom:0.75rem; }
+.report-panel p { font-size:0.82rem; color:#a78c5a; margin-bottom:0.75rem; line-height:1.6; }
+.report-panel input {
+  width:100%; padding:0.7rem 1rem; border:1.5px solid #fcd34d;
+  border-radius:10px; font-size:0.93rem;
+  font-family:'Noto Sans TC',sans-serif; outline:none;
+  margin-bottom:0.75rem; background:#fff;
+}
+.report-panel input:focus { border-color:var(--amber); }
+.btn-report-submit {
+  width:100%; padding:0.75rem; border:none; border-radius:10px;
+  background:var(--amber); color:#fff; font-size:0.93rem; font-weight:700;
+  font-family:'Noto Sans TC',sans-serif; cursor:pointer;
+}
+.btn-report-submit:hover { background:#d97706; }
+
+.report-done {
+  display:none; text-align:center; padding:1rem;
+  background:var(--green-light); border-radius:14px;
+  color:var(--green); font-weight:700; animation:popIn 0.3s ease;
+}
+
+.error-box {
+  display:none; background:#fff5f5; border:2px solid #fecaca;
+  border-radius:14px; padding:1rem 1.25rem; color:#991b1b; font-size:0.9rem;
+}
+
+.tips {
+  background:var(--white); border-radius:16px;
+  padding:1.1rem 1.25rem; box-shadow:var(--shadow);
+}
+.tips h3 { font-size:0.8rem; color:var(--green); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.6rem; }
+.tip-list { display:flex; flex-wrap:wrap; gap:6px; }
+.tip-tag {
+  background:var(--green-light); border:1.5px solid #a8e6bc;
+  border-radius:20px; padding:4px 12px; font-size:0.8rem; color:var(--green);
+}
+
+footer { padding:1.5rem; text-align:center; color:#aaa; font-size:0.75rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔍 昆蟲小偵探</h1>
+  <p>拍下昆蟲，AI 幫你辨識！</p>
+</header>
+
+<main class="main">
+
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" capture="environment">
+    <span class="upload-icon">📷</span>
+    <h3>上傳昆蟲照片</h3>
+    <p>點我拍照，或從相簿選取</p>
+  </div>
+
+  <div class="preview-wrap" id="previewWrap">
+    <div class="scan-bar" id="scanBar"></div>
+    <img id="previewImg" src="" alt="預覽">
+    <button class="btn-clear" id="clearBtn">✕ 換一張</button>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <button class="btn-identify" id="identifyBtn" disabled onclick="identify()">
+    🔍 辨識這隻昆蟲！
+  </button>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-head">
+      <span class="rh-icon" id="rIcon">🐛</span>
+      <div>
+        <div class="rh-name" id="rName">辨識結果</div>
+        <div class="rh-class" id="rClass"></div>
+      </div>
+    </div>
+    <div class="result-body" id="rBody"></div>
+  </div>
+
+  <div class="report-btn-row" id="reportBtnRow">
+    <button class="btn-report" onclick="showReport()">⚠️ 辨識好像怪怪的？回報錯誤</button>
+  </div>
+
+  <div class="report-panel" id="reportPanel">
+    <h4>📬 回報辨識錯誤</h4>
+    <p>你覺得 AI 猜錯了嗎？告訴我們正確答案，幫助 AI 變得更聰明！（不知道也沒關係）</p>
+    <input type="text" id="reportInput" placeholder="你覺得牠是什麼？（選填）">
+    <button class="btn-report-submit" onclick="submitReport()">📤 送出回報</button>
+  </div>
+
+  <div class="report-done" id="reportDone">
+    🌟 謝謝你的回報！你幫助 AI 學到新東西了！
+  </div>
+
+  <div class="tips">
+    <h3>📸 拍照小技巧</h3>
+    <div class="tip-list">
+      <span class="tip-tag">📏 靠近一點拍</span>
+      <span class="tip-tag">💡 光線充足</span>
+      <span class="tip-tag">🎯 昆蟲置中</span>
+      <span class="tip-tag">🌿 各種角度都行</span>
+      <span class="tip-tag">✋ 拿穩不要晃</span>
+    </div>
+  </div>
+
+</main>
+
+<footer>昆蟲小偵探 · 台灣昆蟲辨識 AI</footer>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, collection, addDoc, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAOczw40gPOS1mKFiYZlig_ndHUf_0wR0w",
+  authDomain: "buzz-insect-id-app.firebaseapp.com",
+  projectId: "buzz-insect-id-app",
+  storageBucket: "buzz-insect-id-app.firebasestorage.app",
+  messagingSenderId: "515730771986",
+  appId: "1:515730771986:web:4fdf15599a8d6bdeb9c8cb",
+  measurementId: "G-5FF15HCJ88"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 部署 Railway 後換成你的網址
+const BACKEND = 'https://insect-id-app-production.up.railway.app';
+
+let currentBase64 = null, currentMime = null, currentName = '', currentResult = null;
+
+// Upload
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFile(f);
+});
+fileInput.addEventListener('change', e => { if(e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(file) {
+  currentMime = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentBase64 = e.target.result.split(',')[1];
+    document.getElementById('previewImg').src = e.target.result;
+    uploadZone.style.display = 'none';
+    document.getElementById('previewWrap').style.display = 'block';
+    document.getElementById('identifyBtn').disabled = false;
+    document.getElementById('resultCard').style.display = 'none';
+    document.getElementById('reportBtnRow').classList.remove('show');
+    document.getElementById('reportPanel').style.display = 'none';
+    document.getElementById('reportDone').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  currentBase64 = null;
+  document.getElementById('previewImg').src = '';
+  uploadZone.style.display = 'block';
+  document.getElementById('previewWrap').style.display = 'none';
+  document.getElementById('identifyBtn').disabled = true;
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('reportBtnRow').classList.remove('show');
+  document.getElementById('reportPanel').style.display = 'none';
+  document.getElementById('reportDone').style.display = 'none';
+  fileInput.value = '';
+});
+
+// Identify
+window.identify = async function() {
+  if (!currentBase64) return;
+  const btn = document.getElementById('identifyBtn');
+  btn.disabled = true; btn.textContent = '🔬 AI 分析中...';
+  document.getElementById('scanBar').style.display = 'block';
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('reportBtnRow').classList.remove('show');
+  document.getElementById('reportPanel').style.display = 'none';
+  document.getElementById('reportDone').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    const res = await fetch(`${BACKEND}/api/identify`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({image:currentBase64, mimeType:currentMime})
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    currentResult = data.result;
+    renderResult(data.result);
+    document.getElementById('reportBtnRow').classList.add('show');
+  } catch(err) {
+    const eb = document.getElementById('errorBox');
+    eb.textContent = '😅 辨識失敗：'+err.message;
+    eb.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 辨識這隻昆蟲！';
+    document.getElementById('scanBar').style.display = 'none';
+  }
+};
+
+function getIcon(t) {
+  if (t.includes('蝴蝶')||t.includes('鳳蝶')) return '🦋';
+  if (t.includes('獨角仙')||t.includes('金龜')) return '🦏';
+  if (t.includes('鍬形')) return '🪲';
+  if (t.includes('瓢蟲')) return '🐞';
+  if (t.includes('蜜蜂')||t.includes('蜂')) return '🐝';
+  if (t.includes('螞蟻')) return '🐜';
+  if (t.includes('蜻蜓')) return '🪁';
+  return '🐛';
+}
+
+function renderResult(text) {
+  const lines = text.split('\n').filter(l=>l.trim());
+  let sections=[], cur=null;
+  for (const line of lines) {
+    const l = line.replace(/\*\*/g,'').trim();
+    if (l.includes('這是什麼'))      { cur={label:'這是什麼？',content:''}; }
+    else if (l.includes('分類'))     { if(cur)sections.push(cur); cur={label:'分類',content:''}; }
+    else if (l.includes('特徵'))     { if(cur)sections.push(cur); cur={label:'特徵',content:''}; }
+    else if (l.includes('在哪裡'))   { if(cur)sections.push(cur); cur={label:'在哪裡找到牠？',content:''}; }
+    else if (l.includes('辨識信心')) { if(cur)sections.push(cur); cur={label:'辨識信心',content:''}; }
+    else if (cur) {
+      const c = l.replace(/^[🐛📍✨🌿🎯]\s*/,'').replace(/^[-•]\s*/,'');
+      if(c) cur.content += (cur.content?'\n':'')+c;
+    }
+  }
+  if(cur) sections.push(cur);
+
+  currentName = sections[0]?.content?.split('\n')[0] || '未知昆蟲';
+  document.getElementById('rIcon').textContent = getIcon(currentName+text);
+  document.getElementById('rName').textContent = currentName;
+  const cls = sections.find(s=>s.label==='分類');
+  document.getElementById('rClass').textContent = cls?.content||'';
+
+  document.getElementById('rBody').innerHTML = sections.slice(1).map(s=>{
+    if(s.label==='辨識信心'){
+      const c=s.content.includes('高')?'high':s.content.includes('中')?'mid':'low';
+      const lb=s.content.includes('高')?'高 ✅':s.content.includes('中')?'中 ⚠️':'低 ❓';
+      return `<div class="result-row"><div class="result-label">${s.label}</div><span class="badge badge-${c}">${lb}</span></div>`;
+    }
+    return `<div class="result-row"><div class="result-label">${s.label}</div><div class="result-text">${s.content}</div></div>`;
+  }).join('');
+
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('resultCard').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// Report
+window.showReport = function() {
+  document.getElementById('reportPanel').style.display = 'block';
+  document.getElementById('reportBtnRow').classList.remove('show');
+  document.getElementById('reportInput').focus();
+};
+
+window.submitReport = async function() {
+  const suggestion = document.getElementById('reportInput').value.trim();
+  try {
+    await addDoc(collection(db,'home_reports'), {
+      aiAnswer: currentName,
+      userSuggestion: suggestion || '（未填寫）',
+      timestamp: serverTimestamp()
+    });
+  } catch(e) { console.error(e); }
+  document.getElementById('reportPanel').style.display = 'none';
+  document.getElementById('reportDone').style.display = 'block';
+  document.getElementById('reportInput').value = '';
+};
+</script>
+</body>
+</html>
