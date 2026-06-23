@@ -20,7 +20,7 @@ const INSECT_PROMPT = `你是專精台灣昆蟲的資深昆蟲學家。請辨識
 4. 獨角仙展翅時可見三叉角（頭角＋胸角）、琥珀色膜翅、黑褐色鞘翅。
 
 【台灣常見甲蟲知識庫】
-▌金龜子總科（270種）：獨角仙、花金龜、糞金龜等，觸角鰓葉狀
+▌金龜子總科（270種）：獨角仙（正確學名：Trypoxylus dichotomus，叉犀金龜屬）、花金龜、糞金龜等，觸角鰓葉狀
 ▌鍬形蟲科（50種）：雄蟲大顎發達，體色多黑褐色
 ▌瓢蟲科（148種）：體圓半球形，鞘翅常具圓斑
 ▌天牛科：觸角超長，體型修長
@@ -29,26 +29,26 @@ const INSECT_PROMPT = `你是專精台灣昆蟲的資深昆蟲學家。請辨識
 ▌金花蟲科：體色鮮豔具金屬光澤，植食性
 ▌象鼻蟲科：頭部延伸成象鼻狀口器
 
-請以繁體中文用簡單易懂的方式回答（7歲小朋友也能看懂），格式如下：
+【辨識規則】
+1. 能辨識到種就給種名，不確定就只給科/目，絕對不要亂猜。
+2. 所有分類名稱必須附上中文，例如「鞘翅目 Coleoptera > 金龜子科 Scarabaeidae」。
+3. 若知識庫有對應的學名，以知識庫為準。
+
+請以繁體中文回答，只回答以下三個欄位，不要加任何其他說明：
 
 🐛 這是什麼？
-[昆蟲中文名稱]
+[昆蟲中文名稱，若只能到科/目就寫「某某科的甲蟲」]
 
 📍 分類
-[目 > 科]
-
-✨ 特徵
-[2句話描述外觀，生動有趣]
-
-🌿 在哪裡找到牠？
-[台灣的棲地或常見環境，1句話]
+[目（中文 英文）> 科（中文 英文）> 屬種學名（若能辨識）]
 
 🎯 辨識信心
 [高 / 中 / 低]
 
-若圖片不是昆蟲或完全無法判斷，請友善說明。`;
+若圖片不是昆蟲或無法判斷，請直接說明，不要輸出上面三個欄位。`;
 
-function callClaude(imageBase64, mimeType) {
+function callClaude(imageBase64, mimeType, kbExtra) {
+  const prompt = INSECT_PROMPT + (kbExtra || '');
   const payload = JSON.stringify({
     model: 'claude-sonnet-4-6',
     max_tokens: 600,
@@ -56,7 +56,7 @@ function callClaude(imageBase64, mimeType) {
       role: 'user',
       content: [
         { type: 'image', source: { type: 'base64', media_type: mimeType, data: imageBase64 } },
-        { type: 'text', text: INSECT_PROMPT }
+        { type: 'text', text: prompt }
       ]
     }]
   });
@@ -118,9 +118,9 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/identify') {
     if (!API_KEY) { json(res, 500, { error: '伺服器未設定 API Key' }); return; }
     try {
-      const { image, mimeType } = await readBody(req);
+      const { image, mimeType, kbExtra } = await readBody(req);
       if (!image) throw new Error('缺少圖片資料');
-      const result = await callClaude(image, mimeType || 'image/jpeg');
+      const result = await callClaude(image, mimeType || 'image/jpeg', kbExtra || '');
       json(res, 200, { result });
     } catch(err) {
       json(res, 500, { error: err.message });
