@@ -50,7 +50,7 @@ const INSECT_PROMPT = `你是專精台灣昆蟲的資深昆蟲學家。請辨識
 
 function callClaude(imageBase64, mimeType) {
   const payload = JSON.stringify({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: 600,
     messages: [{
       role: 'user',
