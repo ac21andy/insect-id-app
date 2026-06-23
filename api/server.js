@@ -4,6 +4,13 @@ const http = require('http');
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const PORT = process.env.PORT || 3000;
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Accept',
+  'Access-Control-Max-Age': '86400'
+};
+
 const INSECT_PROMPT = `你是專精台灣昆蟲的資深昆蟲學家。請辨識這張照片中的昆蟲。
 
 【辨識原則】
@@ -93,21 +100,19 @@ function readBody(req) {
 }
 
 function json(res, code, data) {
-  res.writeHead(code, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  });
+  res.writeHead(code, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(data));
 }
 
 const server = http.createServer(async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Set CORS headers on every response
+  Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
-  if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
 
   // 辨識昆蟲
   if (req.method === 'POST' && req.url === '/api/identify') {
