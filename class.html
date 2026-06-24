@@ -138,6 +138,110 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .kb-item-class{font-size:0.75rem;color:var(--green);margin-top:2px;}
 .btn-del{background:none;border:none;color:#d1d5db;cursor:pointer;font-size:0.9rem;padding:4px 8px;border-radius:6px;}
 .btn-del:hover{color:var(--red);}
+
+/* Level system */
+.level-bar-wrap {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+}
+.level-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.level-badge {
+  background: var(--green);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 900;
+  padding: 4px 16px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+}
+.level-ability {
+  font-size: 0.82rem;
+  color: var(--gray);
+  font-weight: 700;
+}
+.level-track {
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.level-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green-mid), var(--green));
+  border-radius: 6px;
+  transition: width 0.8s ease;
+}
+.level-hint {
+  font-size: 0.78rem;
+  color: var(--gray);
+  text-align: right;
+}
+.level-milestones {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.milestone {
+  font-size: 0.68rem;
+  color: var(--gray);
+  text-align: center;
+}
+.milestone.reached {
+  color: var(--green);
+  font-weight: 700;
+}
+
+/* Teacher level override */
+.level-override {
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.level-override h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 0.75rem;
+}
+.level-override-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.level-override input[type="range"] {
+  flex: 1;
+  accent-color: var(--green);
+}
+.level-override-num {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--green);
+  min-width: 40px;
+  text-align: center;
+}
+.btn-level-set {
+  padding: 6px 16px;
+  background: var(--amber);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 </style>
 </head>
 <body>
@@ -197,6 +301,25 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 
 <!-- Dashboard -->
 <div class="panel" id="panel-dashboard">
+  <!-- Level bar -->
+  <div class="level-bar-wrap">
+    <div class="level-row">
+      <span class="level-badge" id="levelBadge">Lv 1</span>
+      <span class="level-ability" id="levelAbility">是不是昆蟲</span>
+    </div>
+    <div class="level-track">
+      <div class="level-fill" id="levelFill" style="width:0%"></div>
+    </div>
+    <div class="level-hint" id="levelHint">上傳更多照片來提升等級！</div>
+    <div class="level-milestones">
+      <div class="milestone" id="m10">Lv10<br>類群</div>
+      <div class="milestone" id="m20">Lv20<br>目</div>
+      <div class="milestone" id="m60">Lv60<br>科/屬</div>
+      <div class="milestone" id="m90">Lv90<br>學名</div>
+      <div class="milestone" id="m100">Lv100</div>
+    </div>
+  </div>
+
   <div class="dash-grid">
     <div class="dash-card"><div class="dash-num" id="dTotal">0</div><div class="dash-label">上傳總張數</div></div>
     <div class="dash-card"><div class="dash-num" id="dSpecies">0</div><div class="dash-label">辨識種類數</div></div>
@@ -244,7 +367,19 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
     <div class="pw-error" id="kbPwError"></div>
   </div>
   <div class="sub-panel" id="kbPanel">
-    <div class="info-box">新增昆蟲的正確中文名、學名、科名。辨識時 AI 會自動對照這份資料。</div>
+    <!-- Teacher level override -->
+    <div class="level-override">
+      <h4>老師專用：手動調整等級</h4>
+      <div class="level-override-row">
+        <span style="font-size:0.82rem;color:#92400e;">Lv</span>
+        <input type="range" id="levelSlider" min="1" max="100" value="1" oninput="document.getElementById('levelOverrideNum').textContent=this.value">
+        <span class="level-override-num" id="levelOverrideNum">1</span>
+        <button class="btn-level-set" onclick="setLevelOverride()">套用</button>
+      </div>
+      <div style="font-size:0.75rem;color:#a78c5a;margin-top:6px;">設定後會覆蓋自動計算的等級，小朋友看不到此設定</div>
+    </div>
+
+    <div class="info-box">新增昆蟲的正確中文名、學名、科名。辨識時 AI 會自動對照此資料。</div>
     <div class="kb-form">
       <div class="kb-form-title">新增昆蟲</div>
       <div class="kb-grid">
@@ -633,6 +768,163 @@ window.deleteKbEntry = async function(index) {
     await setDoc(ref, {entries});
     renderKbList(entries);
   } catch(e) { alert('刪除失敗：' + e.message); }
+};
+
+
+// ══════════════════════════════════════════════
+// 等級系統
+// ══════════════════════════════════════════════
+
+function calcLevel(total) {
+  // 根據上傳張數計算等級 1-100
+  // 設計讓第3-4天抓蟲後大約能到Lv60
+  // 估計5天15人約400-500張
+  if (total >= 400) return 100;
+  if (total >= 300) return 90 + Math.floor((total - 300) / 10);
+  if (total >= 150) return 60 + Math.floor((total - 150) / 5);
+  if (total >= 50)  return 20 + Math.floor((total - 50) / 3.75);
+  if (total >= 10)  return 10 + Math.floor((total - 10) / 4);
+  return Math.max(1, total);
+}
+
+function getLevelAbility(level) {
+  if (level < 10) return '是不是昆蟲';
+  if (level < 20) return '辨識常見類群';
+  if (level < 60) return '辨識到目';
+  if (level < 90) return '辨識到科/屬';
+  return '完整學名辨識';
+}
+
+function getNextMilestone(level) {
+  if (level < 10) return { next: 10, ability: '類群辨識' };
+  if (level < 20) return { next: 20, ability: '目級辨識' };
+  if (level < 60) return { next: 60, ability: '科/屬辨識' };
+  if (level < 90) return { next: 90, ability: '完整學名' };
+  return { next: 100, ability: '最高等級' };
+}
+
+function getUploadsForLevel(targetLevel) {
+  if (targetLevel >= 100) return 400;
+  if (targetLevel >= 90) return 300 + (targetLevel - 90) * 10;
+  if (targetLevel >= 60) return 150 + (targetLevel - 60) * 5;
+  if (targetLevel >= 20) return 50 + (targetLevel - 20) * 3.75;
+  if (targetLevel >= 10) return 10 + (targetLevel - 10) * 4;
+  return targetLevel;
+}
+
+let currentLevel = 1;
+let levelOverride = null;
+
+function updateLevelUI(total) {
+  const autoLevel = calcLevel(total);
+  currentLevel = levelOverride !== null ? levelOverride : autoLevel;
+
+  document.getElementById('levelBadge').textContent = `Lv ${currentLevel}`;
+  document.getElementById('levelAbility').textContent = getLevelAbility(currentLevel);
+
+  // Progress bar - fill based on position between milestones
+  const pct = Math.min(100, currentLevel);
+  document.getElementById('levelFill').style.width = pct + '%';
+
+  // Hint
+  const { next, ability } = getNextMilestone(currentLevel);
+  if (currentLevel >= 100) {
+    document.getElementById('levelHint').textContent = '已達最高等級！';
+  } else {
+    const needed = Math.ceil(getUploadsForLevel(next) - total);
+    document.getElementById('levelHint').textContent =
+      needed > 0 ? `距離 Lv${next}（${ability}）還差約 ${needed} 張` : `即將解鎖 ${ability}！`;
+  }
+
+  // Milestone highlights
+  [10, 20, 60, 90, 100].forEach(m => {
+    const el = document.getElementById(`m${m}`);
+    if (el) el.classList.toggle('reached', currentLevel >= m);
+  });
+
+  // Update slider
+  const slider = document.getElementById('levelSlider');
+  if (slider) {
+    slider.value = currentLevel;
+    document.getElementById('levelOverrideNum').textContent = currentLevel;
+  }
+}
+
+window.setLevelOverride = async function() {
+  const val = parseInt(document.getElementById('levelSlider').value);
+  levelOverride = val;
+  try {
+    await setDoc(doc(db, 'stats', 'camp'), { levelOverride: val }, { merge: true });
+  } catch(e) { console.error(e); }
+  const stats = await getStats();
+  updateLevelUI(stats.total || 0);
+  alert(`等級已設定為 Lv ${val}`);
+};
+
+// Override loadDashboard to include level
+const _origLoadDashboard = loadDashboard;
+async function loadDashboard() {
+  try {
+    const stats = await getStats();
+    levelOverride = stats.levelOverride ?? null;
+    updateLevelUI(stats.total || 0);
+
+    document.getElementById('dTotal').textContent = stats.total || 0;
+    document.getElementById('dCorrect').textContent = stats.correct || 0;
+    document.getElementById('dWrong').textContent = stats.wrong || 0;
+    const species = stats.species || {};
+    const arr = Object.entries(species).sort((a,b) => b[1]-a[1]);
+    document.getElementById('dSpecies').textContent = arr.length;
+    const maxCount = arr[0]?.[1] || 1;
+    document.getElementById('speciesList').innerHTML = arr.length === 0
+      ? '<div style="text-align:center;color:#9ca3af;padding:1rem;font-size:0.85rem;">還沒有辨識記錄</div>'
+      : arr.slice(0,10).map(([name,count],i) => `
+        <div class="species-item">
+          <div class="species-rank">${i+1}</div>
+          <div class="species-name">${name}</div>
+          <div class="species-bar-wrap"><div class="species-bar" style="width:${Math.round(count/maxCount*100)}%"></div></div>
+          <div class="species-count">${count}次</div>
+        </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+// Override identify to pass level
+const _origIdentify = window.identify;
+window.identify = async function() {
+  if (!currentBase64) return;
+  const btn = document.getElementById('identifyBtn');
+  btn.disabled = true; btn.textContent = 'AI 分析中...';
+  document.getElementById('scanBar').style.display = 'block';
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('feedbackRow').classList.remove('show');
+  document.getElementById('teacherInput').style.display = 'none';
+  document.getElementById('feedbackDone').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    const kbExtra = await getKbForPrompt();
+    // Get current level from Firebase
+    const stats = await getStats();
+    levelOverride = stats.levelOverride ?? null;
+    const lvl = levelOverride !== null ? levelOverride : calcLevel(stats.total || 0);
+
+    const res = await fetch(`${BACKEND}/api/identify`, {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({image: currentBase64, mimeType: currentMime, kbExtra, level: lvl})
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderResult(data.result);
+    document.getElementById('feedbackRow').classList.add('show');
+    await recordIdentify(currentName);
+  } catch(err) {
+    const eb = document.getElementById('errorBox');
+    eb.textContent = '辨識失敗：' + err.message;
+    eb.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '辨識這隻昆蟲';
+    document.getElementById('scanBar').style.display = 'none';
+  }
 };
 
 </script>
