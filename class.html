@@ -558,37 +558,7 @@ async function getKbForPrompt() {
   } catch(e) { return ''; }
 }
 
-window.identify = async function() {
-  if (!currentBase64) return;
-  const btn = document.getElementById('identifyBtn');
-  btn.disabled = true; btn.textContent = 'AI 分析中...';
-  document.getElementById('scanBar').style.display = 'block';
-  document.getElementById('resultCard').style.display = 'none';
-  document.getElementById('feedbackRow').classList.remove('show');
-  document.getElementById('teacherInput').style.display = 'none';
-  document.getElementById('feedbackDone').style.display = 'none';
-  document.getElementById('errorBox').style.display = 'none';
-
-  try {
-    const kbExtra = await getKbForPrompt();
-    const res = await fetch(`${BACKEND}/api/identify`, {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({image: currentBase64, mimeType: currentMime, kbExtra})
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    renderResult(data.result);
-    document.getElementById('feedbackRow').classList.add('show');
-    await recordIdentify(currentName);
-  } catch(err) {
-    const eb = document.getElementById('errorBox');
-    eb.textContent = '辨識失敗：' + err.message;
-    eb.style.display = 'block';
-  } finally {
-    btn.disabled = false; btn.textContent = '辨識這隻昆蟲';
-    document.getElementById('scanBar').style.display = 'none';
-  }
-};
+// window.identify defined below with level support
 
 // ── Feedback ──
 window.feedback = async function(correct) {
@@ -647,27 +617,7 @@ async function recordFeedback(aiAnswer, correct, trueAnswer) {
 }
 
 // ── Dashboard ──
-async function loadDashboard() {
-  try {
-    const stats = await getStats();
-    document.getElementById('dTotal').textContent = stats.total || 0;
-    document.getElementById('dCorrect').textContent = stats.correct || 0;
-    document.getElementById('dWrong').textContent = stats.wrong || 0;
-    const species = stats.species || {};
-    const arr = Object.entries(species).sort((a,b) => b[1]-a[1]);
-    document.getElementById('dSpecies').textContent = arr.length;
-    const maxCount = arr[0]?.[1] || 1;
-    document.getElementById('speciesList').innerHTML = arr.length === 0
-      ? '<div style="text-align:center;color:#9ca3af;padding:1rem;font-size:0.85rem;">還沒有辨識記錄</div>'
-      : arr.slice(0,10).map(([name,count],i) => `
-        <div class="species-item">
-          <div class="species-rank">${i+1}</div>
-          <div class="species-name">${name}</div>
-          <div class="species-bar-wrap"><div class="species-bar" style="width:${Math.round(count/maxCount*100)}%"></div></div>
-          <div class="species-count">${count}次</div>
-        </div>`).join('');
-  } catch(e) { console.error(e); }
-}
+// loadDashboard defined below with level support
 
 window.resetDashboard = async function() {
   if (!confirm('確定要重置所有營隊資料？')) return;
@@ -862,7 +812,6 @@ window.setLevelOverride = async function() {
 };
 
 // Override loadDashboard to include level
-const _origLoadDashboard = loadDashboard;
 async function loadDashboard() {
   try {
     const stats = await getStats();
@@ -889,7 +838,6 @@ async function loadDashboard() {
 }
 
 // Override identify to pass level
-const _origIdentify = window.identify;
 window.identify = async function() {
   if (!currentBase64) return;
   const btn = document.getElementById('identifyBtn');
