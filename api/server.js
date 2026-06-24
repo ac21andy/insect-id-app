@@ -171,6 +171,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const { image, mimeType, kbExtra, level } = await readBody(req);
       if (!image) throw new Error('缺少圖片資料');
+      console.log(`[識別請求] level=${level}, kbExtra長度=${(kbExtra||'').length}`);
       const result = await callClaude(image, mimeType || 'image/jpeg', kbExtra || '', level || 100);
       json(res, 200, { result });
     } catch(err) {
