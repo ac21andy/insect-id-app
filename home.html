@@ -366,22 +366,32 @@ function renderResult(text) {
     const l = line.replace(/\*\*/g,'').trim();
     if (l.includes('這是什麼'))      { cur={label:'這是什麼？',content:''}; }
     else if (l.includes('分類'))     { if(cur)sections.push(cur); cur={label:'分類',content:''}; }
-    else if (l.includes('特徵'))     { if(cur)sections.push(cur); cur={label:'特徵',content:''}; }
-    else if (l.includes('在哪裡'))   { if(cur)sections.push(cur); cur={label:'在哪裡找到牠？',content:''}; }
     else if (l.includes('辨識信心')) { if(cur)sections.push(cur); cur={label:'辨識信心',content:''}; }
     else if (cur) {
-      const c = l.replace(/^[🐛📍✨🌿🎯]\s*/,'').replace(/^[-•]\s*/,'');
+      const c = l.replace(/^[🐛📍🎯]\s*/,'').replace(/^[-•]\s*/,'');
       if(c) cur.content += (cur.content?'\n':'')+c;
     }
   }
   if(cur) sections.push(cur);
 
-  currentName = sections[0]?.content?.split('\n')[0] || '未知昆蟲';
-  document.getElementById('rIcon').textContent = getIcon(currentName+text);
-  document.getElementById('rName').textContent = currentName;
-  const cls = sections.find(s=>s.label==='分類');
-  document.getElementById('rClass').textContent = cls?.content||'';
+  // Clean name - remove asterisks and brackets
+  const firstLine = sections[0]?.content?.split('\n')[0] || '未知昆蟲';
+  const cleanLine = firstLine.replace(/\*/g,'').replace(/[\(\)]/g,'').trim();
+  const sciMatch = cleanLine.match(/^([^A-Z]+?)\s+([A-Z][a-z]+.*)$/);
+  if (sciMatch) {
+    currentName = sciMatch[1].trim();
+    const sciName = sciMatch[2].trim();
+    document.getElementById('rIcon').textContent = getIcon(currentName+text);
+    document.getElementById('rName').textContent = currentName;
+    document.getElementById('rClass').innerHTML = `<em>${sciName}</em>`;
+  } else {
+    currentName = cleanLine;
+    document.getElementById('rIcon').textContent = getIcon(currentName+text);
+    document.getElementById('rName').textContent = currentName;
+    document.getElementById('rClass').textContent = '';
+  }
 
+  // Only show 分類 and 辨識信心 in body, skip 這是什麼
   document.getElementById('rBody').innerHTML = sections.slice(1).map(s=>{
     if(s.label==='辨識信心'){
       const c=s.content.includes('高')?'high':s.content.includes('中')?'mid':'low';
