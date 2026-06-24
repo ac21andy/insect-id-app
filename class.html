@@ -310,13 +310,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
       <div class="level-fill" id="levelFill" style="width:0%"></div>
     </div>
     <div class="level-hint" id="levelHint">上傳更多照片來提升等級！</div>
-    <div class="level-milestones">
-      <div class="milestone" id="m10">Lv10<br>類群</div>
-      <div class="milestone" id="m20">Lv20<br>目</div>
-      <div class="milestone" id="m60">Lv60<br>科/屬</div>
-      <div class="milestone" id="m90">Lv90<br>學名</div>
-      <div class="milestone" id="m100">Lv100</div>
-    </div>
+
   </div>
 
   <div class="dash-grid">
@@ -770,25 +764,20 @@ function updateLevelUI(total) {
 
   document.getElementById('levelBadge').textContent = `Lv ${currentLevel}`;
 
-  // Progress bar - fill based on position between milestones
-  const pct = Math.min(100, currentLevel);
-  document.getElementById('levelFill').style.width = pct + '%';
+  // Progress bar - show position in 1-100
+  document.getElementById('levelFill').style.width = currentLevel + '%';
 
-  // Hint
-  const { next, ability } = getNextMilestone(currentLevel);
+  // Hint - show distance to next level
   if (currentLevel >= 100) {
     document.getElementById('levelHint').textContent = '已達最高等級！';
   } else {
-    const needed = Math.ceil(getUploadsForLevel(next) - total);
+    const nextLevel = currentLevel + 1;
+    const needed = Math.ceil(getUploadsForLevel(nextLevel) - total);
     document.getElementById('levelHint').textContent =
-      needed > 0 ? `距離 Lv${next}（${ability}）還差約 ${needed} 張` : `即將解鎖 ${ability}！`;
+      needed > 0 ? `距離 Lv${nextLevel} 還差約 ${needed} 張` : '即將升級！';
   }
 
-  // Milestone highlights
-  [10, 20, 60, 90, 100].forEach(m => {
-    const el = document.getElementById(`m${m}`);
-    if (el) el.classList.toggle('reached', currentLevel >= m);
-  });
+
 
   // Update slider
   const slider = document.getElementById('levelSlider');
