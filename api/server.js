@@ -15,15 +15,14 @@ function getPromptByLevel(level) {
   const kb_note = `若知識庫有對應學名，以知識庫為準。`;
 
   if (level <= 9) {
-    return `你是昆蟲辨識專家。請看這張照片，只回答以下格式，不要加任何其他文字：
-
-是昆蟲 / 不是昆蟲
-
-若是昆蟲就回答「是昆蟲」，不是就回答「不是昆蟲：[簡短說明是什麼]」`;
+    return `請看這張照片，判斷是否有昆蟲。只能回答以下其中一種，不能有任何其他文字：
+- 若有昆蟲：只回答「是昆蟲」
+- 若沒有昆蟲：只回答「不是昆蟲」
+不能描述照片內容，不能解釋，只能回答「是昆蟲」或「不是昆蟲」四個字。`;
   }
 
   if (level <= 19) {
-    return `你是昆蟲辨識專家。請看這張照片，從以下15個類群中選出最符合的一個，只回答以下格式：
+    return `你是昆蟲辨識專家。請看這張照片，從以下12個類群中選出最符合的一個，只回答以下格式：
 
 🐛 這是什麼？
 [從以下選一個：蜻蜓、蚱蜢、蟑螂、螳螂、竹節蟲、蟬、金龜子、獨角仙、鍬形蟲、瓢蟲、蝴蝶、蜜蜂、螞蟻、蒼蠅、蚊子]
@@ -31,7 +30,7 @@ function getPromptByLevel(level) {
 🎯 辨識信心
 [高 / 中 / 低]
 
-若不是以上15種類群的昆蟲，回答「其他昆蟲」。若不是昆蟲，只寫「不是昆蟲」。不要加任何其他說明。`;
+若不是以上12種類群的昆蟲，回答「其他昆蟲」。若不是昆蟲，只寫「不是昆蟲」。不要加任何其他說明。`;
   }
 
   if (level <= 59) {
@@ -56,7 +55,7 @@ function getPromptByLevel(level) {
 [昆蟲中文名稱]
 
 📍 分類
-[目中文名 > 科中文名 科學名 > 屬名]
+[目中文名 Coleoptera > 科中文名 Scarabaeidae > 屬名]
 
 🎯 辨識信心
 [高 / 中 / 低]
@@ -94,6 +93,8 @@ function getPromptByLevel(level) {
 
 規則：名稱欄學名直接接在中文後，不加括弧星號。不要描述姿態或性別。若不是昆蟲，只寫「不是昆蟲」。`;
 }
+
+const INSECT_PROMPT = getPromptByLevel(100); // default fallback
 
 function callClaude(imageBase64, mimeType, kbExtra, level) {
   const basePrompt = getPromptByLevel(level || 100);
@@ -154,6 +155,7 @@ function json(res, code, data) {
 }
 
 const server = http.createServer(async (req, res) => {
+  // Set CORS headers on every response
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
   if (req.method === 'OPTIONS') {
@@ -162,12 +164,13 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 辨識昆蟲
   if (req.method === 'POST' && req.url === '/api/identify') {
     if (!API_KEY) { json(res, 500, { error: '伺服器未設定 API Key' }); return; }
     try {
       const { image, mimeType, kbExtra, level } = await readBody(req);
       if (!image) throw new Error('缺少圖片資料');
-      console.log(`[識別請求] level=${level}`);
+      console.log(`[識別請求] level=${level}, kbExtra長度=${(kbExtra||'').length}`);
       const result = await callClaude(image, mimeType || 'image/jpeg', kbExtra || '', level || 100);
       json(res, 200, { result });
     } catch(err) {
@@ -176,15 +179,18 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Health check
   if (req.method === 'GET' && req.url === '/') {
     json(res, 200, { status: 'ok', message: '昆蟲辨識伺服器運作中 🦋' });
     return;
   }
 
+  // Debug endpoint
   if (req.method === 'GET' && req.url === '/debug') {
     json(res, 200, {
       hasKey: !!process.env.ANTHROPIC_API_KEY,
-      keyPrefix: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 15) + '...' : 'NOT SET'
+      keyPrefix: process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.substring(0, 15) + '...' : 'NOT SET',
+      allEnvKeys: Object.keys(process.env).filter(k => k.includes('ANTHROP') || k.includes('API') || k.includes('insect'))
     });
     return;
   }
