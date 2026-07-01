@@ -495,6 +495,20 @@ function getIcon(t) {
 }
 
 function renderResult(text) {
+  const trimmed = text.trim();
+
+  // Lv1-9: simple 是昆蟲 / 不是昆蟲 response
+  if (!trimmed.includes('🐛') && !trimmed.includes('這是什麼')) {
+    document.getElementById('rIcon').textContent = trimmed.startsWith('是昆蟲') ? '🐛' : '❓';
+    document.getElementById('rName').textContent = trimmed.startsWith('是昆蟲') ? '是昆蟲！' : trimmed.replace('不是昆蟲：','').replace('不是昆蟲','不是昆蟲');
+    document.getElementById('rClass').textContent = '';
+    document.getElementById('rBody').innerHTML = '';
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+    currentName = trimmed.startsWith('是昆蟲') ? '是昆蟲' : '不是昆蟲';
+    return;
+  }
+
   const lines = text.split('\n').filter(l => l.trim());
   let sections = [], cur = null;
   for (const line of lines) {
